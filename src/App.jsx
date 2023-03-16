@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { Grid, Space, Upload, Button, Input, Typography } from '@arco-design/web-react';
 
-import { loadResource } from '@/utils/utils';
+import { initWeb } from '@/utils/utils';
 
 export default () => {
-  const [torrentId, setTorrentId] = useState('magnet:?xt=urn:btih:66f9eb84bc6169f7d301ad3aca6debb6037f8e0d&dn=index-22e5abbc.js&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com');
+  const [torrentId, setTorrentId] = useState('');
   const [magnetURI, setMagnetURI] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fileList, setFileList] = useState([]);
 
   const handleOk = async () => {
     setLoading(true);
     try {
-      await loadResource(torrentId);
+      await initWeb(torrentId);
     } finally {
       setLoading(false);
     }
@@ -27,24 +28,37 @@ export default () => {
   }
 
   const handleChange = (fileList) => {
+    setFileList(fileList.map(file => file.originFile));
+  }
+
+  const handleSeed = () => {
     seed(fileList);
   }
 
   return (
-    <Grid.Row gutter={[16, 16]}>
-      <Grid.Col span={24}>
+    <>
+      <div style={{textAlign: 'center', marginBottom: 16}}>
         <Space>
           <Input
             style={{width: 400}}
             placeholder="请输入torrentId"
+            size="large"
             value={torrentId}
             onChange={(value) => setTorrentId(value)}
           />
-          <Button onClick={handleOk} type="primary" loading={loading}>确定</Button>
+          <Button
+            size="large"
+            type="primary"
+            loading={loading}
+            disabled={!torrentId}
+            onClick={handleOk}
+          >
+            确定
+          </Button>
         </Space>
-      </Grid.Col>
+      </div>
       
-      <Grid.Col span={24}>
+      <div>
         <Upload
           multiple
           autoUpload={false}
@@ -53,7 +67,8 @@ export default () => {
         <Typography.Paragraph copyable={!!magnetURI}>
           {magnetURI}
         </Typography.Paragraph>
-      </Grid.Col>
-    </Grid.Row>
+        <Button onClick={handleSeed} type="primary" disabled={fileList.length === 0}>Seed</Button>
+      </div>
+    </>
   );
 }
