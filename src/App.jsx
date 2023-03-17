@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Space, Upload, Button, Input, Grid, Spin } from '@arco-design/web-react';
+import { Space, Upload, Button, Input, Grid, Typography, Tooltip } from '@arco-design/web-react';
 import { IconFile, IconDelete, IconUpload, IconSend } from '@arco-design/web-react/icon';
 import debounce from 'lodash/debounce';
 
@@ -22,7 +22,6 @@ export default () => {
   const [torrentId, setTorrentId] = useState('');
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
-  const { torrent } = useParams();
 
   const client = useMemo(() => new WebTorrent(), []);
 
@@ -44,15 +43,6 @@ export default () => {
     seed(fileList.map(file => file.originFile));
   }, [fileList]);
 
-  useEffect(() => {
-    if (torrent) {
-      setLoading(true);
-      initWeb(torrent).finally(() => {
-        setLoading(false);
-      })
-    }
-  }, [torrent]);
-
   const handleChange = (files) => {
     setFileList(files);
   }
@@ -62,13 +52,10 @@ export default () => {
   }
 
   const handleOk = () => {
-    window.open(`${location.origin}?torrent=${encodeURIComponent(torrentId)}`);
-  }
-
-  if (torrent) {
-    return (
-      <Spin loading={loading} tip="疯狂加载中..." style={{width: '100%', marginTop: 200}} />
-    );
+    setLoading(true);
+    initWeb(torrentId).finally(() => {
+      setLoading(false);
+    })
   }
 
   return (
@@ -79,7 +66,19 @@ export default () => {
         value={torrentId}
         style={{marginBottom: 16}}
         addAfter={(
-          <Space style={{margin: '0 -16px'}} size={0}>
+          <Space style={{margin: '0 -16px'}} size={2}>
+            <Typography.Text
+              copyable={{
+                text: torrentId,
+              }}
+              style={{
+                height: 36,
+                width: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            />
             <Upload
               multiple
               autoUpload={false}
@@ -87,16 +86,19 @@ export default () => {
               fileList={fileList}
               onChange={handleChange}
             >
-              <Button size="large" icon={<IconUpload />} />
+              <Tooltip content="上传">
+                <Button size="large" icon={<IconUpload />} />
+              </Tooltip>
             </Upload>
-            <Button
-              type="primary"
-              size="large"
-              loading={loading}
-              disabled={!torrentId}
-              icon={<IconSend />}
-              onClick={handleOk}
-            />
+            <Tooltip content="跳转">
+              <Button
+                size="large"
+                loading={loading}
+                disabled={!torrentId}
+                icon={<IconSend />}
+                onClick={handleOk}
+              />
+            </Tooltip>
           </Space>
         )}
         onChange={(value) => setTorrentId(value)}
