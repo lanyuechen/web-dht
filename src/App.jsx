@@ -1,15 +1,28 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Upload, Button, Input, Typography, Grid } from '@arco-design/web-react';
-import { IconFile, IconDelete } from '@arco-design/web-react/icon';
+import { Space, Upload, Button, Input, Grid, Spin } from '@arco-design/web-react';
+import { IconFile, IconDelete, IconUpload, IconSend } from '@arco-design/web-react/icon';
 import debounce from 'lodash/debounce';
 
 import { initWeb } from '@/utils/utils';
 
+const useParams = () => {
+  const res = {};
+  if (!location.search) {
+    return res;
+  }
+  const search = location.search.substring(1);
+  search.split('&').forEach(kv => {
+    const [k, v] = kv.split('=');
+    res[k] = decodeURIComponent(v);
+  });
+  return res;
+}
+
 export default () => {
   const [torrentId, setTorrentId] = useState('');
-  const [magnetURI, setMagnetURI] = useState('');
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
+  const { torrent } = useParams();
 
   const client = useMemo(() => new WebTorrent(), []);
 
@@ -20,16 +33,25 @@ export default () => {
 
     if (files.length) {
       client.seed(files, (torrent) => {
-        setMagnetURI(torrent.magnetURI);
+        setTorrentId(torrent.magnetURI);
       });
     } else {
-      setMagnetURI('');
+      setTorrentId('');
     }
   }, 100), []);
 
   useEffect(() => {
     seed(fileList.map(file => file.originFile));
   }, [fileList]);
+
+  useEffect(() => {
+    if (torrent) {
+      setLoading(true);
+      initWeb(torrent).finally(() => {
+        setLoading(false);
+      })
+    }
+  }, [torrent]);
 
   const handleChange = (files) => {
     setFileList(files);
@@ -39,51 +61,46 @@ export default () => {
     setFileList((files) => files.filter(d => d !== file));
   }
 
-  const handleOk = async () => {
-    setLoading(true);
-    try {
-      await initWeb(torrentId);
-    } finally {
-      setLoading(false);
-    }
+  const handleOk = () => {
+    window.open(`${location.origin}?torrent=${encodeURIComponent(torrentId)}`);
+  }
+
+  if (torrent) {
+    return (
+      <Spin loading={loading} tip="疯狂加载中..." style={{width: '100%', marginTop: 200}} />
+    );
   }
 
   return (
     <div style={{width: '50%', margin: '160px auto 0 auto'}}>
-      <Grid.Row gutter={16} style={{marginBottom: 16}}>
-        <Grid.Col flex="auto">
-          <Input
-            placeholder="请输入torrentId"
-            size="large"
-            value={torrentId}
-            onChange={(value) => setTorrentId(value)}
-          />
-        </Grid.Col>
-        <Grid.Col flex="initial">
-          <Button
-            size="large"
-            type="primary"
-            loading={loading}
-            disabled={!torrentId}
-            onClick={handleOk}
-          >
-            确定
-          </Button>
-        </Grid.Col>
-        <Grid.Col flex="initial">
-          <Upload
-            multiple
-            autoUpload={false}
-            showUploadList={false}
-            fileList={fileList}
-            onChange={handleChange}
-          >
-            <Button type="text" size="large">
-              Seed
-            </Button>
-          </Upload>
-        </Grid.Col>
-      </Grid.Row>
+      <Input
+        placeholder="请输入torrentId"
+        size="large"
+        value={torrentId}
+        style={{marginBottom: 16}}
+        addAfter={(
+          <Space style={{margin: '0 -16px'}} size={0}>
+            <Upload
+              multiple
+              autoUpload={false}
+              showUploadList={false}
+              fileList={fileList}
+              onChange={handleChange}
+            >
+              <Button size="large" icon={<IconUpload />} />
+            </Upload>
+            <Button
+              type="primary"
+              size="large"
+              loading={loading}
+              disabled={!torrentId}
+              icon={<IconSend />}
+              onClick={handleOk}
+            />
+          </Space>
+        )}
+        onChange={(value) => setTorrentId(value)}
+      />
 
       <div style={{background: 'var(--color-fill-2)', marginBottom: 16}}>
         {fileList.map(file => (
@@ -99,14 +116,6 @@ export default () => {
           </Grid.Row>
         ))}
       </div>
-      
-      {magnetURI && (
-        <Typography style={{ background: 'var(--color-fill-2)', padding: 16 }}>
-          <Typography.Paragraph copyable style={{marginBottom: 0}}>
-            {magnetURI}
-          </Typography.Paragraph>
-        </Typography>
-      )}
     </div>
   );
 }
