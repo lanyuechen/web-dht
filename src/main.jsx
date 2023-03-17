@@ -6,6 +6,8 @@ import './index.css';
 
 import App from './App';
 
+window.wt = new WebTorrent();
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />
 );

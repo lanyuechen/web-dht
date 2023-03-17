@@ -1,5 +1,3 @@
-window.wt = new WebTorrent();
-
 const appendJs = (url, body = document.body) => {
   const script = document.createElement('script');
   script.setAttribute('src', url);

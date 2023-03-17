@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Grid, Space, Upload, Button, Input, Typography } from '@arco-design/web-react';
+import { useState, useMemo } from 'react';
+import { Upload, Button, Input, Typography, Grid } from '@arco-design/web-react';
+import { IconFile, IconDelete } from '@arco-design/web-react/icon';
+import debounce from 'lodash/debounce';
 
 import { initWeb } from '@/utils/utils';
 
@@ -8,6 +10,19 @@ export default () => {
   const [magnetURI, setMagnetURI] = useState('');
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
+
+  const client = useMemo(() => new WebTorrent(), []);
+
+  const seed = useMemo(() => debounce((files) => {
+    client.seed(files, (torrent) => {
+      setMagnetURI(torrent.magnetURI);
+    });
+  }, 100), []);
+
+  const handleChange = (files) => {
+    setFileList(files);
+    seed(files.map(file => file.originFile));
+  }
 
   const handleOk = async () => {
     setLoading(true);
@@ -18,34 +33,18 @@ export default () => {
     }
   }
 
-  const seed = (file) => {
-    const client = new WebTorrent();
-
-    client.seed(file, (torrent) => {
-      setMagnetURI(torrent.magnetURI);
-      console.log('torrent', torrent);
-    });
-  }
-
-  const handleChange = (fileList) => {
-    setFileList(fileList.map(file => file.originFile));
-  }
-
-  const handleSeed = () => {
-    seed(fileList);
-  }
-
   return (
-    <>
-      <div style={{textAlign: 'center', marginBottom: 16}}>
-        <Space>
+    <div style={{width: '50%', margin: '160px auto 0 auto'}}>
+      <Grid.Row gutter={16} style={{marginBottom: 16}}>
+        <Grid.Col flex="auto">
           <Input
-            style={{width: 400}}
             placeholder="请输入torrentId"
             size="large"
             value={torrentId}
             onChange={(value) => setTorrentId(value)}
           />
+        </Grid.Col>
+        <Grid.Col flex="initial">
           <Button
             size="large"
             type="primary"
@@ -55,20 +54,43 @@ export default () => {
           >
             确定
           </Button>
-        </Space>
+        </Grid.Col>
+        <Grid.Col flex="initial">
+          <Upload
+            multiple
+            autoUpload={false}
+            showUploadList={false}
+            onChange={handleChange}
+          >
+            <Button type="text" size="large">
+              Seed
+            </Button>
+          </Upload>
+        </Grid.Col>
+      </Grid.Row>
+
+      <div style={{background: 'var(--color-fill-2)', marginBottom: 16}}>
+        {fileList.map(file => (
+          <Grid.Row key={file.name} gutter={8}>
+            <Grid.Col flex="auto">
+              <div style={{padding: '4px 8px'}}>
+                <IconFile />&nbsp;&nbsp;{file.name}
+              </div>
+            </Grid.Col>
+            <Grid.Col flex="32px">
+              <Button type="text" icon={<IconDelete />} />
+            </Grid.Col>
+          </Grid.Row>
+        ))}
       </div>
       
-      <div>
-        <Upload
-          multiple
-          autoUpload={false}
-          onChange={handleChange}
-        />
-        <Typography.Paragraph copyable={!!magnetURI}>
-          {magnetURI}
-        </Typography.Paragraph>
-        <Button onClick={handleSeed} type="primary" disabled={fileList.length === 0}>Seed</Button>
-      </div>
-    </>
+      {magnetURI && (
+        <Typography style={{ background: 'var(--color-fill-2)', padding: 16 }}>
+          <Typography.Paragraph copyable style={{marginBottom: 0}}>
+            {magnetURI}
+          </Typography.Paragraph>
+        </Typography>
+      )}
+    </div>
   );
 }
