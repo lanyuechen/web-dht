@@ -12,9 +12,13 @@ const appendCss = (url, head = document.head) => {
 }
 
 const loadTorrent = (torrentId) => {
-  return new Promise((resolve) => {
-    wt.add(torrentId, (torrent) => {
+  return new Promise((resolve, reject) => {
+    const torrent = wt.add(torrentId);
+    torrent.on('ready', () => {
       resolve(torrent);
+    });
+    torrent.on('error', (err) => {
+      reject(err);
     });
   })
 }

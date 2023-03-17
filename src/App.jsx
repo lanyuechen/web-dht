@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Upload, Button, Input, Typography, Grid } from '@arco-design/web-react';
 import { IconFile, IconDelete } from '@arco-design/web-react/icon';
 import debounce from 'lodash/debounce';
@@ -14,14 +14,29 @@ export default () => {
   const client = useMemo(() => new WebTorrent(), []);
 
   const seed = useMemo(() => debounce((files) => {
-    client.seed(files, (torrent) => {
-      setMagnetURI(torrent.magnetURI);
+    client.torrents.forEach(torrent => {
+      client.remove(torrent.infoHash);
     });
+
+    if (files.length) {
+      client.seed(files, (torrent) => {
+        setMagnetURI(torrent.magnetURI);
+      });
+    } else {
+      setMagnetURI('');
+    }
   }, 100), []);
+
+  useEffect(() => {
+    seed(fileList.map(file => file.originFile));
+  }, [fileList]);
 
   const handleChange = (files) => {
     setFileList(files);
-    seed(files.map(file => file.originFile));
+  }
+
+  const handleRemove = (file) => {
+    setFileList((files) => files.filter(d => d !== file));
   }
 
   const handleOk = async () => {
@@ -60,6 +75,7 @@ export default () => {
             multiple
             autoUpload={false}
             showUploadList={false}
+            fileList={fileList}
             onChange={handleChange}
           >
             <Button type="text" size="large">
@@ -78,7 +94,7 @@ export default () => {
               </div>
             </Grid.Col>
             <Grid.Col flex="32px">
-              <Button type="text" icon={<IconDelete />} />
+              <Button type="text" icon={<IconDelete />} onClick={() => handleRemove(file)} />
             </Grid.Col>
           </Grid.Row>
         ))}
