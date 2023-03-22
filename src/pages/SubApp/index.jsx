@@ -17,11 +17,11 @@ export default () => {
       return;
     }
 
-    setLoading(true);
+    // setLoading(true);
 
-    client.createDocument(decodeURIComponent(id), ref.current.contentDocument).finally(() => {
-      setLoading(false);
-    });
+    // client.createDocument(decodeURIComponent(id), ref.current.contentDocument).finally(() => {
+    //   setLoading(false);
+    // });
 
     // 直接通过innerHTML设置iframe，script和css不会加载
     // client.getDocument(decodeURIComponent(id)).then(doc => {
@@ -34,15 +34,24 @@ export default () => {
   }, [client]);
 
   return (
-    <Spin loading={loading} tip="加载中...">
-      <iframe
+    <Spin loading={loading} tip="疯狂加载中...">
+      <micro-app
+        name="test"
+        torrent={id}
+        style={{
+          display: 'block',
+          width: '100vw',
+          height: '100vh',
+        }}
+      />
+      {/* <iframe
         ref={ref}
         style={{
           width: '100vw',
           height: '100vh',
           border: 'none',
         }}
-      />
+      /> */}
     </Spin>
   );
 }
