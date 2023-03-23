@@ -1,4 +1,7 @@
 import CreateApp, { appInstanceMap } from './App';
+import { hijackRoute } from './route';
+
+hijackRoute();
 
 class MicroApp extends HTMLElement {
   // 声明需要监听的属性名，只有这些属性变化时才会触发attributeChangedCallback
@@ -8,6 +11,8 @@ class MicroApp extends HTMLElement {
 
   constructor() {
     super();
+
+    this.attachShadow({ mode: 'open' });
   }
 
   connectedCallback() {

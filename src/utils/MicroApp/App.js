@@ -1,4 +1,5 @@
 import Client from '@/utils/Client';
+import Sandbox from './Sandbox';
 
 const parseTemplate = (template) => {
   return template
@@ -56,6 +57,7 @@ export default class {
     this.client = new Client();
 
     parseDocument(this);
+    this.sandbox = new Sandbox(name);
   }
 
   status = 'created' // 组件状态，包括 created/loading/mount/unmount
@@ -86,9 +88,11 @@ export default class {
     // 将格式化后的DOM结构插入到容器中
     this.container.appendChild(fragment);
 
+    this.sandbox.start();
+
     // 执行js
     this.source.scripts.forEach((info) => {
-      eval(info.content);
+      (0, eval)(this.sandbox.bindScope(info.content));
     });
 
     // 标记应用为已渲染
@@ -104,6 +108,9 @@ export default class {
     this.status = 'unmount'
     // 清空容器
     this.container = null
+
+    this.sandbox.stop();
+    
     // destory为true，则删除应用
     if (destory) {
       appInstanceMap.delete(this.name)
