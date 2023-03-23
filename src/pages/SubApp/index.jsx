@@ -17,41 +17,34 @@ export default () => {
       return;
     }
 
-    // setLoading(true);
-
-    // client.createDocument(decodeURIComponent(id), ref.current.contentDocument).finally(() => {
-    //   setLoading(false);
-    // });
+    setLoading(true);
 
     // 直接通过innerHTML设置iframe，script和css不会加载
-    // client.getDocument(decodeURIComponent(id)).then(doc => {
-    //   if (ref.current.contentDocument?.documentElement?.innerHTML) {
-    //     ref.current.contentDocument.documentElement.innerHTML = doc;
-    //   }
-    // }).finally(() => {
-    //   setLoading(false);
-    // });
+    const iframeDocument = ref.current.contentDocument;
+    client.parseDocument(decodeURIComponent(id)).then(({ template, scripts }) => {
+      if (iframeDocument?.documentElement?.innerHTML) {
+        iframeDocument.documentElement.innerHTML = template;
+        scripts.forEach(d => {
+          const script = iframeDocument.createElement('script');
+          script.textContent = d.content;
+          iframeDocument.body.appendChild(script);
+        });
+      }
+    }).finally(() => {
+      setLoading(false);
+    });
   }, [client]);
 
   return (
     <Spin loading={loading} tip="疯狂加载中...">
-      <micro-app
-        name="test"
-        torrent={id}
-        style={{
-          display: 'block',
-          width: '100vw',
-          height: '100vh',
-        }}
-      />
-      {/* <iframe
+      <iframe
         ref={ref}
         style={{
           width: '100vw',
           height: '100vh',
           border: 'none',
         }}
-      /> */}
+      />
     </Spin>
   );
 }

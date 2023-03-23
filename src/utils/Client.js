@@ -35,4 +35,30 @@ export default class Client {
       return { file, content, ext };
     }));
   }
+
+  parseDocument = async (torrentId) => {
+    console.log('[parse document start]');
+    const files = await this.loadFiles(torrentId);
+  
+    const template = files.find(d => d.ext === 'html')?.content;
+    const styles = files.filter(d => d.ext === 'css');
+    const scripts = files.filter(d => d.ext === 'js');
+
+    console.log('[parse document end]');
+
+    return {
+      template: `
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>WEB DHT NEW</title>
+          ${styles.map(style => `<style>${style.content}</style>`).join('\n')}
+        </head>
+        <body>
+          <div id="root"></div>
+        </body>
+      `,
+      scripts,
+    };
+  }
 }
