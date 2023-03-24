@@ -37,7 +37,7 @@ export default class Client {
   }
 
   parseDocument = async (torrentId) => {
-    console.log('[parse document start]');
+    console.log('[parse document start]:', torrentId);
     const files = await this.loadFiles(torrentId);
   
     const template = files.find(d => d.ext === 'html')?.content;
@@ -48,15 +48,18 @@ export default class Client {
 
     return {
       template: `
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>WEB DHT NEW</title>
-          ${styles.map(style => `<style>${style.content}</style>`).join('\n')}
-        </head>
-        <body>
-          <div id="root"></div>
-        </body>
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>WEB DHT NEW</title>
+            ${styles.map(style => `<style>${style.content}</style>`).join('\n')}
+          </head>
+          <body>
+            <div id="root"></div>
+          </body>
+        </html>
       `,
       scripts,
     };
